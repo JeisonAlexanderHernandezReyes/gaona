@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
