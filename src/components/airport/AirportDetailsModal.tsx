@@ -21,17 +21,7 @@ const AirportDetailsModal: React.FC<AirportDetailsModalProps> = ({
   airport 
 }) => {
   if (!airport) return null;
-  
-  // Example additional data that could be shown in the modal
-  const additionalInfo = {
-    terminals: 3,
-    runways: 2,
-    elevation: "2548m",
-    website: "www.aeropuerto-eldorado.com",
-    phoneNumber: "+57 601 2662000",
-    timezone: "America/Bogota",
-  };
-  
+
   return (
     <Dialog 
       open={open} 
@@ -40,7 +30,7 @@ const AirportDetailsModal: React.FC<AirportDetailsModalProps> = ({
       fullWidth
       PaperProps={{
         style: {
-          backgroundColor: '#1e293b', // Dark blue background
+          backgroundColor: '#1e293b', // Fondo azul oscuro
           color: 'white',
           borderRadius: '0.75rem',
         },
@@ -61,7 +51,7 @@ const AirportDetailsModal: React.FC<AirportDetailsModalProps> = ({
         <InfoIcon 
           sx={{ 
             mr: 1,
-            color: '#3b82f6' // Blue color for icon 
+            color: '#3b82f6' // Color azul para el icono
           }} 
         />
         <span className="font-bold text-xl">Detalles del Aeropuerto</span>
@@ -84,10 +74,10 @@ const AirportDetailsModal: React.FC<AirportDetailsModalProps> = ({
         <div className="bg-blue-900/30 p-6 rounded-lg mb-6">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold mb-2">{airport.name}</h2>
-              <p className="text-gray-300 mb-4">{airport.city}, {airport.country}</p>
+              <h2 className="text-2xl font-bold mb-2">{airport.airport_name}</h2>
+              <p className="text-gray-300 mb-4">{airport.city_iata_code}, {airport.country_name}</p>
               <div className="inline-block bg-blue-600 px-4 py-2 rounded-lg">
-                <span className="text-3xl font-bold">{airport.code}</span>
+                <span className="text-3xl font-bold">{airport.iata_code}</span>
               </div>
             </div>
             <div className="bg-blue-600 p-3 rounded-full">
@@ -104,20 +94,24 @@ const AirportDetailsModal: React.FC<AirportDetailsModalProps> = ({
             </h3>
             <ul className="space-y-2">
               <li className="flex justify-between">
-                <span className="text-gray-400">Terminales:</span>
-                <span>{additionalInfo.terminals}</span>
-              </li>
-              <li className="flex justify-between">
-                <span className="text-gray-400">Pistas:</span>
-                <span>{additionalInfo.runways}</span>
-              </li>
-              <li className="flex justify-between">
-                <span className="text-gray-400">Elevación:</span>
-                <span>{additionalInfo.elevation}</span>
+                <span className="text-gray-400">Código ICAO:</span>
+                <span>{airport.icao_code || 'N/A'}</span>
               </li>
               <li className="flex justify-between">
                 <span className="text-gray-400">Zona Horaria:</span>
-                <span>{additionalInfo.timezone}</span>
+                <span>{airport.timezone || 'N/A'}</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="text-gray-400">GMT Offset:</span>
+                <span>{airport.gmt || 'N/A'}</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="text-gray-400">Latitud:</span>
+                <span>{airport.latitude || 'N/A'}</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="text-gray-400">Longitud:</span>
+                <span>{airport.longitude || 'N/A'}</span>
               </li>
             </ul>
           </div>
@@ -129,12 +123,8 @@ const AirportDetailsModal: React.FC<AirportDetailsModalProps> = ({
             </h3>
             <ul className="space-y-2">
               <li className="flex justify-between">
-                <span className="text-gray-400">Sitio Web:</span>
-                <span>{additionalInfo.website}</span>
-              </li>
-              <li className="flex justify-between">
                 <span className="text-gray-400">Teléfono:</span>
-                <span>{additionalInfo.phoneNumber}</span>
+                <span>{airport.phone_number || 'No disponible'}</span>
               </li>
             </ul>
           </div>
