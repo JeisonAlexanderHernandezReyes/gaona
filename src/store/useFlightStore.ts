@@ -1,31 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-
-interface Flight {
-  flight_date: string;
-  flight_status: string;
-  departure: {
-    airport: string;
-    scheduled: string;
-  };
-  arrival: {
-    airport: string;
-    scheduled: string;
-  };
-  airline: {
-    name: string;
-  };
-  flight: {
-    number: string;
-  };
-}
-
-interface Airport {
-  airport_name: string;
-  iata_code: string;
-  city: string;
-  country: string;
-}
+import { Airport, Flight } from '@/types';
 
 interface FlightStore {
   flights: Flight[];
@@ -73,17 +48,27 @@ export const useAirportStore = create<AirportStore>((set) => ({
   fetchAirports: async () => {
     try {
       set({ loading: true, error: null });
-      const response = await axios.get(`${API_URL}/airports`, {
-        params: {
-          access_key: API_KEY,
-        },
-      });
-      set({ airports: response.data.data, loading: false });
+      
+      // Set pagination parameters
+      const params = {
+        access_key: API_KEY,
+        limit: 6710
+      };
+      
+      const response = await axios.get(`${API_URL}/airports`, { params });
+      
+      // Validate response structure
+      if (response.data && Array.isArray(response.data.data)) {
+        set({ airports: response.data.data, loading: false });
+      } else {
+        throw new Error('Invalid API response format');
+      }
     } catch (error) {
+      console.error('Error fetching airports:', error);
       set({ 
         error: error instanceof Error ? error.message : 'An error occurred while fetching airports',
         loading: false 
       });
     }
   },
-})); 
+}));
