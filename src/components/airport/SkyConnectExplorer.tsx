@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import SearchIcon from '@mui/icons-material/Search';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import AirplanemodeActiveIcon from '@mui/icons-material/AirplanemodeActive';
@@ -138,13 +139,31 @@ const SkyConnectExplorer = () => {
         setErrorSnackbar({ ...errorSnackbar, open: false });
     };
 
-    // Airport card component with updated info
+    // Airport card component with updated info and background image with gradient
     const AirportCard = ({ airport }: { airport: Airport }) => (
         <div
             className="bg-gray-800 rounded-lg p-6 relative overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:bg-gray-700 w-full h-full flex flex-col"
             onClick={() => handleAirportClick(airport)}
         >
-            <div className="flex justify-between items-start">
+            {/* Gradient overlay - from left to center */}
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-600 via-gray-800/90 to-transparent z-0 pointer-events-none"></div>
+            
+            {/* Background airplane image - only in right half */}
+            <div className="absolute top-0 right-0 w-1/2 h-full z-0 opacity-30 pointer-events-none overflow-hidden">
+                <div className="relative w-full h-full">
+                    <Image
+                        src="/avion.png"
+                        alt="Airplane background"
+                        layout="fill"
+                        objectFit="cover"
+                        objectPosition="center right"
+                        className="blur-xs"
+                        priority={false}
+                    />
+                </div>
+            </div>
+            
+            <div className="flex justify-between items-start relative z-10">
                 <div className="overflow-hidden flex-1">
                     <h3 className="text-xl font-bold text-white mb-2">{airport.airport_name}</h3>
                     <p className="text-gray-400">{airport.country_name}</p>
@@ -157,9 +176,6 @@ const SkyConnectExplorer = () => {
                         <FlightTakeoffIcon fontSize="medium" />
                     </div>
                 </div>
-            </div>
-            <div className="absolute right-2 bottom-2 opacity-10 pointer-events-none">
-                <div className="text-9xl text-gray-500">✈</div>
             </div>
         </div>
     );
@@ -246,9 +262,11 @@ const SkyConnectExplorer = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col">
+        <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col relative">
+
+
             {/* Header with search and IATA search indicator */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 px-4 md:px-8 lg:px-12">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 px-4 md:px-8 lg:px-12 relative z-10">
                 <h1 className="text-3xl text-blue-400 font-bold whitespace-nowrap">
                     SkyConnect Explorer
                 </h1>
@@ -263,7 +281,7 @@ const SkyConnectExplorer = () => {
 
             {/* Search type indicator */}
             {searchApplied && (
-                <div className="px-4 md:px-8 lg:px-12 mb-4">
+                <div className="px-4 md:px-8 lg:px-12 mb-4 relative z-10">
                     <div className="inline-flex items-center bg-blue-600/20 px-4 py-2 rounded-full">
                         <span className="mr-2">
                             {isIataSearch ? <AirplanemodeActiveIcon fontSize="small" /> : <SearchIcon fontSize="small" />}
@@ -278,7 +296,7 @@ const SkyConnectExplorer = () => {
             )}
 
             {/* Main content - flex-grow pushes pagination to bottom */}
-            <div className="flex-grow">
+            <div className="flex-grow relative z-10">
                 {/* Loading indicator */}
                 {loading && (
                     <div className="flex justify-center my-8">
