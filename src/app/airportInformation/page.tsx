@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
-import General from '../components/General';
-import Ubication from '../components/Ubication';
-import ZoneTime from '../components/ZoneTime';
+import General from '../../components/General';
+import Ubication from '../../components/Ubication';
+import ZoneTime from '../../components/ZoneTime';
 type Tab = 'general' | 'ubicacion' | 'zona-horaria' | 'estadisticas';
 
 function App() {
