@@ -10,13 +10,12 @@ import { useAirportStore } from '@/store/useFlightStore';
 import { useRouter } from 'next/navigation';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import IconButton from '@mui/material/IconButton';
-import { Tooltip } from '@mui/material';
+import SearchForm from '../ui/SearchForm';
 
 const SkyConnectExplorer = () => {
     // Navigation
     const router = useRouter();
-    
+
     // Local state
     const [searchTerm, setSearchTerm] = useState('');
     const [searchApplied, setSearchApplied] = useState('');
@@ -26,14 +25,14 @@ const SkyConnectExplorer = () => {
         open: false,
         message: ''
     });
-    
+
     // Global state from Zustand
-    const { 
-        airports, 
-        loading, 
-        error, 
-        fetchAirports, 
-        fetchAirportByIATA 
+    const {
+        airports,
+        loading,
+        error,
+        fetchAirports,
+        fetchAirportByIATA
     } = useAirportStore();
 
     // Map API airports to our Airport interface
@@ -61,7 +60,7 @@ const SkyConnectExplorer = () => {
 
     const filteredAirports = getAirportsData().filter(airport => {
         if (!searchApplied) return true;
-    
+
         const searchTermLower = searchApplied.toLowerCase();
         return (
             (airport.airport_name && airport.airport_name.toLowerCase().includes(searchTermLower)) ||
@@ -69,7 +68,7 @@ const SkyConnectExplorer = () => {
             (airport.country_name && airport.country_name.toLowerCase().includes(searchTermLower)) ||
             (airport.iata_code && airport.iata_code.toLowerCase().includes(searchTermLower))
         );
-    });    
+    });
 
     // Pagination logic
     const itemsPerPage = 6;
@@ -91,17 +90,17 @@ const SkyConnectExplorer = () => {
 
     const handleSearchSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Clear previous error state
         setErrorSnackbar({ open: false, message: '' });
-        
+
         if (!searchTerm.trim()) {
             setSearchApplied('');
             setIsIataSearch(false);
             setCurrentPage(1);
             return;
         }
-        
+
         // Check if this is an IATA code search
         if (searchTerm.length === 3 && validateIataCode(searchTerm)) {
             try {
@@ -109,10 +108,10 @@ const SkyConnectExplorer = () => {
                 await fetchAirportByIATA(searchTerm.toUpperCase());
                 setSearchApplied(searchTerm);
                 setCurrentPage(1);
-            } catch {
+            } catch (err) {
                 setErrorSnackbar({
                     open: true,
-                    message: `No airport found with IATA code: ${searchTerm.toUpperCase()}`
+                    message: `No airport found with IATA code: ${searchTerm.toUpperCase()} - ${err}`
                 });
             }
         } else {
@@ -130,7 +129,7 @@ const SkyConnectExplorer = () => {
     const handleAirportClick = (airport: Airport) => {
         // Store the selected airport in localStorage for retrieval on the airport information page
         localStorage.setItem('selectedAirport', JSON.stringify(airport));
-        
+
         // Navigate to the airport information page
         router.push(`/airportInformation?code=${airport.iata_code}`);
     };
@@ -254,33 +253,12 @@ const SkyConnectExplorer = () => {
                     SkyConnect Explorer
                 </h1>
 
-                <form onSubmit={handleSearchSubmit} className="flex-grow max-w-3xl">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder={isIataSearch ? "Buscar por código IATA (ej: LAX)" : "Buscar aeropuertos..."}
-                            value={searchTerm}
-                            onChange={handleSearch}
-                            className="w-full px-6 py-3 rounded-full bg-white text-black focus:outline-none pr-16"
-                        />
-                        <Tooltip title={isIataSearch ? "Buscar por código IATA" : "Buscar aeropuertos"}>
-                            <IconButton
-                                type="submit"
-                                className="absolute right-0 top-0 h-full px-6 rounded-r-full bg-blue-600 flex items-center justify-center text-white"
-                                sx={{ 
-                                    borderTopRightRadius: '9999px', 
-                                    borderBottomRightRadius: '9999px',
-                                    height: '100%', 
-                                    bgcolor: 'primary.main',
-                                    '&:hover': { bgcolor: 'primary.dark' },
-                                    color: 'white'
-                                }}
-                            >
-                                {isIataSearch ? <AirplanemodeActiveIcon /> : <SearchIcon />}
-                            </IconButton>
-                        </Tooltip>
-                    </div>
-                </form>
+                <SearchForm
+                    searchTerm={searchTerm}
+                    placeholder={isIataSearch ? "Buscar por código IATA (ej: LAX)" : "Buscar aeropuertos..."}
+                    onSearchChange={handleSearch}
+                    onSearchSubmit={handleSearchSubmit}
+                />
             </div>
 
             {/* Search type indicator */}
@@ -291,8 +269,8 @@ const SkyConnectExplorer = () => {
                             {isIataSearch ? <AirplanemodeActiveIcon fontSize="small" /> : <SearchIcon fontSize="small" />}
                         </span>
                         <span>
-                            {isIataSearch 
-                                ? `Buscando por código IATA: ${searchApplied.toUpperCase()}` 
+                            {isIataSearch
+                                ? `Buscando por código IATA: ${searchApplied.toUpperCase()}`
                                 : `Resultados para: "${searchApplied}"`}
                         </span>
                     </div>
@@ -334,17 +312,17 @@ const SkyConnectExplorer = () => {
 
             {/* Pagination */}
             {!loading && <Pagination />}
-            
+
             {/* Error Snackbar */}
-            <Snackbar 
-                open={errorSnackbar.open} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={errorSnackbar.open}
+                autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             >
-                <Alert 
-                    onClose={handleCloseSnackbar} 
-                    severity="error" 
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity="error"
                     sx={{ width: '100%' }}
                 >
                     {errorSnackbar.message}
