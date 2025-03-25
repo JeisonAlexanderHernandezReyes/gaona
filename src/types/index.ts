@@ -1,10 +1,18 @@
 export interface Airport {
+  airport_id: string;
+  airport_name: string;
+  city_iata_code: string;
+  country_iso2: string;
+  country_name: string;
+  geoname_id: string;
+  gmt: string;
+  iata_code: string;
+  icao_code: string;
   id: string;
-  name: string;
-  city: string;
-  country: string;
-  code: string;
-  image?: string;
+  latitude: string;
+  longitude: string;
+  phone_number?: string | null;
+  timezone: string;
 }
 
 export interface SearchParams {

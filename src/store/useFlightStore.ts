@@ -1,31 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-
-export interface Flight {
-  flight_date: string;
-  flight_status: string;
-  departure: {
-    airport: string;
-    scheduled: string;
-  };
-  arrival: {
-    airport: string;
-    scheduled: string;
-  };
-  airline: {
-    name: string;
-  };
-  flight: {
-    number: string;
-  };
-}
-
-export interface ApiAirport {
-  airport_name: string;
-  iata_code: string;
-  city: string;
-  country: string;
-}
+import { Airport, Flight } from '@/types';
 
 interface FlightStore {
   flights: Flight[];
@@ -35,7 +10,7 @@ interface FlightStore {
 }
 
 interface AirportStore {
-  airports: ApiAirport[];
+  airports: Airport[];
   loading: boolean;
   error: string | null;
   fetchAirports: () => Promise<void>;
@@ -77,7 +52,7 @@ export const useAirportStore = create<AirportStore>((set) => ({
       // Set pagination parameters
       const params = {
         access_key: API_KEY,
-        limit: 100 // Fetch more airports at once for better user experience
+        limit: 6710
       };
       
       const response = await axios.get(`${API_URL}/airports`, { params });
