@@ -12,18 +12,41 @@ const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
 }) => {
     const [searchTerm, setSearchTerm] = useState<string>('');
 
+    // Función para sanitizar texto sin dependencias externas
+    const sanitizeInput = (input: string): string => {
+        const noHtml = input.replace(/<\/?[^>]+(>|$)/g, "");
+        
+        const noInjection = noHtml.replace(/['";{}()*&^%$#@!~`\\/]/g, '');
+        
+        return noInjection.substring(0, 100);
+    };
+
     const handleSearch = (event: React.FormEvent) => {
         event.preventDefault();
-        // Validate input to prevent XSS
-        const sanitizedInput = searchTerm.trim().replace(/[<>]/g, '');
+        
+        // Aplicar la sanitización completa al texto de búsqueda
+        const sanitizedInput = sanitizeInput(searchTerm.trim());
+        
         onSearch(sanitizedInput);
     };
+
+    // Validar la URL de la imagen de fondo para prevenir ataques basados en URL
+    const validateImageUrl = (url: string): string => {
+        // Solo permitir rutas absolutas locales o URLs HTTPS específicas
+        if (url.startsWith('/') || 
+            /^https:\/\/[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(\/[a-zA-Z0-9-_.]+)*\/?$/.test(url)) {
+            return url;
+        }
+        return '/airport-background.jpg'; // URL por defecto segura
+    };
+
+    const safeBackgroundImage = validateImageUrl(backgroundImage);
 
     return (
         <div
             className="w-full h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat relative overflow-hidden"
             style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 32, 0.8), rgba(0, 0, 32, 0.9)), url(${backgroundImage})`
+                backgroundImage: `linear-gradient(rgba(0, 0, 32, 0.8), rgba(0, 0, 32, 0.9)), url(${safeBackgroundImage})`
             }}
         >
             {/* Title with more dramatic gradient and proper sizing */}
@@ -43,6 +66,11 @@ const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
                             placeholder="Buscar aeropuertos..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            maxLength={100}
+                            aria-label="Campo de búsqueda de aeropuertos"
+                            autoComplete="off" 
+                            pattern="[A-Za-z0-9\s-.]+"
+                            title="Solo se permiten letras, números, espacios, guiones y puntos"
                         />
                     </div>
 
