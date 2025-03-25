@@ -8,16 +8,19 @@ interface SearchSkyConnectProps {
 
 const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
     onSearch = () => { },
-    backgroundImage = '/airport-background.jpg'
+    backgroundImage = '/aeropuerto.png'
 }) => {
     const [searchTerm, setSearchTerm] = useState<string>('');
 
     // Función para sanitizar texto sin dependencias externas
     const sanitizeInput = (input: string): string => {
+        // Eliminar HTML y caracteres especiales para prevenir XSS
         const noHtml = input.replace(/<\/?[^>]+(>|$)/g, "");
         
+        // Eliminar caracteres potencialmente peligrosos para prevenir inyecciones
         const noInjection = noHtml.replace(/['";{}()*&^%$#@!~`\\/]/g, '');
         
+        // Limitar la longitud para prevenir ataques DoS
         return noInjection.substring(0, 100);
     };
 
@@ -37,7 +40,7 @@ const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
             /^https:\/\/[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(\/[a-zA-Z0-9-_.]+)*\/?$/.test(url)) {
             return url;
         }
-        return '/airport-background.jpg'; // URL por defecto segura
+        return '/aeropuerto.png'; // URL por defecto segura
     };
 
     const safeBackgroundImage = validateImageUrl(backgroundImage);
@@ -46,7 +49,7 @@ const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
         <div
             className="w-full h-screen flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat relative overflow-hidden"
             style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 32, 0.8), rgba(0, 0, 32, 0.9)), url(${safeBackgroundImage})`
+                backgroundImage: `linear-gradient(rgba(0, 0, 32, 0.7), rgba(0, 32, 64, 0.8)), url(${safeBackgroundImage})`
             }}
         >
             {/* Title with more dramatic gradient and proper sizing */}
@@ -66,10 +69,10 @@ const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
                             placeholder="Buscar aeropuertos..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            maxLength={100}
+                            maxLength={100} // Prevenir entradas excesivamente largas
                             aria-label="Campo de búsqueda de aeropuertos"
-                            autoComplete="off" 
-                            pattern="[A-Za-z0-9\s-.]+"
+                            autoComplete="off" // Prevenir autocompletado con datos sensibles
+                            pattern="[A-Za-z0-9\s-.]+" // Restringir caracteres válidos
                             title="Solo se permiten letras, números, espacios, guiones y puntos"
                         />
                     </div>
