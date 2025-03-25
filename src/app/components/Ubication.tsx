@@ -2,27 +2,36 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 export default function Ubication() {
 
     return (
-        <>
-            <div className="bg-[#1C1F35]/60 backdrop-blur-sm rounded-2xl p-8 shadow-xl mb-6">
-                <div className="flex items-center gap-3 mb-8">
-                    <LocationOnIcon className="w-8 h-8 text-[#4B8BFF]" />
-                    <h2 className="text-[#4B8BFF] text-2xl font-semibold">
-                        Ubicación
-                    </h2>
+        <div className="max-w-6xl mx-auto">
+            <div className="bg-[#1C1F35]/60 backdrop-blur-sm rounded-2xl overflow-hidden flex mb-6">
+                <div className="flex-1 p-8">
+                    <div className="flex items-center gap-3 mb-8">
+                        <LocationOnIcon className="w-8 h-8 text-[#4B8BFF]" />
+                        <h2 className="text-[#4B8BFF] text-2xl font-semibold">
+                            Ubicación
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="flex items-center gap-2">
+                            <p className="text-gray-400 min-w-[100px]">Latitud:</p>
+                            <p className="text-xl font-medium">-17.05</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <p className="text-gray-400 min-w-[100px]">Longitud:</p>
+                            <p className="text-xl font-medium">-145.41667</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <p className="text-gray-400 min-w-[100px]">ID Geoname:</p>
+                            <p className="text-xl font-medium">6947726</p>
+                        </div>
+                    </div>
                 </div>
-                <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <p className="text-gray-400">Latitud:</p>
-                        <p className="text-xl font-medium">-17.05</p>
-                    </div>
-                    <div className="space-y-2">
-                        <p className="text-gray-400">Longitud:</p>
-                        <p className="text-xl font-medium">-145.41667</p>
-                    </div>
-                    <div className="space-y-2">
-                        <p className="text-gray-400">ID Geoname:</p>
-                        <p className="text-xl font-medium">6947726</p>
-                    </div>
+                <div className="w-1/2 opacity-10">
+                    <img
+                        src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800"
+                        alt="Airplane decoration"
+                        className="w-full h-full object-cover"
+                    />
                 </div>
             </div>
             <div className="h-[400px] rounded-2xl overflow-hidden">
@@ -36,6 +45,6 @@ export default function Ubication() {
                     referrerPolicy="no-referrer-when-downgrade"
                 />
             </div>
-        </>
+        </div>
     );
 }
