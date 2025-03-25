@@ -1,7 +1,13 @@
 import PublicIcon from '@mui/icons-material/Public';
 import TimerIcon from '@mui/icons-material/Timer';
+import { Airport } from '@/types';
 
-export default function ZoneTime() {
+interface ZoneTimeProps {
+    airport: Airport;
+}
+
+export default function ZoneTime({ airport }: ZoneTimeProps) {
+
     return (
         <div className="max-w-7xl mx-auto">
             <div className="bg-[#1C1F35]/60 backdrop-blur-sm rounded-2xl overflow-hidden flex flex-col md:flex-row mb-4 sm:mb-6">
@@ -15,11 +21,11 @@ export default function ZoneTime() {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                         <div className="flex items-center gap-2">
                             <p className="text-gray-400 min-w-[100px]">Zona Horaria:</p>
-                            <p className="text-lg sm:text-xl font-medium">Pacific/Tahiti</p>
+                            <p className="text-lg sm:text-xl font-medium">{airport.timezone || 'N/A'}</p>
                         </div>
                         <div className="flex items-center gap-2">
                             <p className="text-gray-400 min-w-[100px]">GMT:</p>
-                            <p className="text-lg sm:text-xl font-medium">-10</p>
+                            <p className="text-lg sm:text-xl font-medium">{airport.gmt || 'N/A'}</p>
                         </div>
                     </div>
                 </div>

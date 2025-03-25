@@ -1,23 +1,40 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import SearchIcon from '@mui/icons-material/Search';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
+import AirplanemodeActiveIcon from '@mui/icons-material/AirplanemodeActive';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Airport } from '@/types';
-import AirportDetailsModal from './AirportDetailsModal';
 import { useAirportStore } from '@/store/useFlightStore';
+import { useRouter } from 'next/navigation';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import SearchForm from '../ui/SearchForm';
 
 const SkyConnectExplorer = () => {
+    // Navigation
+    const router = useRouter();
+
     // Local state
     const [searchTerm, setSearchTerm] = useState('');
     const [searchApplied, setSearchApplied] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedAirport, setSelectedAirport] = useState<Airport | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
+    const [isIataSearch, setIsIataSearch] = useState(false);
+    const [errorSnackbar, setErrorSnackbar] = useState({
+        open: false,
+        message: ''
+    });
 
     // Global state from Zustand
-    const { airports, loading, error, fetchAirports } = useAirportStore();
+    const {
+        airports,
+        loading,
+        error,
+        fetchAirports,
+        fetchAirportByIATA
+    } = useAirportStore();
 
     // Map API airports to our Airport interface
     const mapAirportsData = useCallback((apiAirports: Airport[]): Airport[] => {
@@ -44,16 +61,18 @@ const SkyConnectExplorer = () => {
 
     const filteredAirports = getAirportsData().filter(airport => {
         if (!searchApplied) return true;
-    
+
         const searchTermLower = searchApplied.toLowerCase();
-        return airport.airport_name.toLowerCase().includes(searchTermLower) ||
-            airport.city_iata_code.toLowerCase().includes(searchTermLower) ||
-            airport.country_name.toLowerCase().includes(searchTermLower) ||
-            airport.iata_code.toLowerCase().includes(searchTermLower);
-    });    
+        return (
+            (airport.airport_name && airport.airport_name.toLowerCase().includes(searchTermLower)) ||
+            (airport.city_iata_code && airport.city_iata_code.toLowerCase().includes(searchTermLower)) ||
+            (airport.country_name && airport.country_name.toLowerCase().includes(searchTermLower)) ||
+            (airport.iata_code && airport.iata_code.toLowerCase().includes(searchTermLower))
+        );
+    });
 
     // Pagination logic
-    const itemsPerPage = 8;
+    const itemsPerPage = 6;
     const totalPages = Math.ceil(filteredAirports.length / itemsPerPage);
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -61,12 +80,47 @@ const SkyConnectExplorer = () => {
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
+        setIsIataSearch(false);
     };
 
-    const handleSearchSubmit = (e: React.FormEvent) => {
+    const validateIataCode = (code: string): boolean => {
+        // IATA codes are typically 3 alphabetic characters
+        const iataRegex = /^[A-Za-z]{3}$/;
+        return iataRegex.test(code);
+    };
+
+    const handleSearchSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSearchApplied(searchTerm);
-        setCurrentPage(1); // Reset to first page when applying search
+
+        // Clear previous error state
+        setErrorSnackbar({ open: false, message: '' });
+
+        if (!searchTerm.trim()) {
+            setSearchApplied('');
+            setIsIataSearch(false);
+            setCurrentPage(1);
+            return;
+        }
+
+        // Check if this is an IATA code search
+        if (searchTerm.length === 3 && validateIataCode(searchTerm)) {
+            try {
+                setIsIataSearch(true);
+                await fetchAirportByIATA(searchTerm.toUpperCase());
+                setSearchApplied(searchTerm);
+                setCurrentPage(1);
+            } catch (err) {
+                setErrorSnackbar({
+                    open: true,
+                    message: `No airport found with IATA code: ${searchTerm.toUpperCase()} - ${err}`
+                });
+            }
+        } else {
+            // Regular search
+            setIsIataSearch(false);
+            setSearchApplied(searchTerm);
+            setCurrentPage(1);
+        }
     };
 
     const handlePageChange = (pageNumber: number) => {
@@ -74,36 +128,54 @@ const SkyConnectExplorer = () => {
     };
 
     const handleAirportClick = (airport: Airport) => {
-        setSelectedAirport(airport);
-        setModalOpen(true);
+        // Store the selected airport in localStorage for retrieval on the airport information page
+        localStorage.setItem('selectedAirport', JSON.stringify(airport));
+
+        // Navigate to the airport information page
+        router.push(`/airportInformation?code=${airport.iata_code}`);
     };
 
-    const handleCloseModal = () => {
-        setModalOpen(false);
+    const handleCloseSnackbar = () => {
+        setErrorSnackbar({ ...errorSnackbar, open: false });
     };
 
-    // Airport card component with updated info
+    // Airport card component with updated info and background image with gradient
     const AirportCard = ({ airport }: { airport: Airport }) => (
         <div
-            className="bg-gray-800 rounded-lg p-4 relative overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:bg-gray-700"
+            className="bg-gray-800 rounded-lg p-6 relative overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:bg-gray-700 w-full h-full flex flex-col"
             onClick={() => handleAirportClick(airport)}
         >
-            <div className="flex justify-between">
-                <div className="overflow-hidden">
-                    <h3 className="text-xl font-bold truncate text-white">{airport.airport_name}</h3>
-                    <p className="text-gray-400 truncate"> {airport.country_name}</p>
-                    <div className="mt-4">
-                        <span className="text-4xl font-bold text-blue-400">{airport.iata_code}</span>
-                    </div>
-                </div>
-                <div className="flex items-center ml-2">
-                    <div className="bg-blue-500 p-3 rounded-full text-white flex-shrink-0">
-                        <FlightTakeoffIcon />
-                    </div>
+            {/* Gradient overlay - from left to center */}
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-600 via-gray-800/90 to-transparent z-0 pointer-events-none"></div>
+            
+            {/* Background airplane image - only in right half */}
+            <div className="absolute top-0 right-0 w-1/2 h-full z-0 opacity-30 pointer-events-none overflow-hidden">
+                <div className="relative w-full h-full">
+                    <Image
+                        src="/avion.png"
+                        alt="Airplane background"
+                        layout="fill"
+                        objectFit="cover"
+                        objectPosition="center right"
+                        className="blur-xs"
+                        priority={false}
+                    />
                 </div>
             </div>
-            <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
-                <div className="text-8xl text-gray-500">✈</div>
+            
+            <div className="flex justify-between items-start relative z-10">
+                <div className="overflow-hidden flex-1">
+                    <h3 className="text-xl font-bold text-white mb-2">{airport.airport_name}</h3>
+                    <p className="text-gray-400">{airport.country_name}</p>
+                    <div className="mt-6">
+                        <span className="text-5xl font-bold text-blue-400">{airport.iata_code}</span>
+                    </div>
+                </div>
+                <div className="flex items-center">
+                    <div className="bg-blue-500 p-4 rounded-full text-white flex-shrink-0">
+                        <FlightTakeoffIcon fontSize="medium" />
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -190,35 +262,41 @@ const SkyConnectExplorer = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col">
-            {/* Header with search in a single row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+        <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col relative">
+
+
+            {/* Header with search and IATA search indicator */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 px-4 md:px-8 lg:px-12 relative z-10">
                 <h1 className="text-3xl text-blue-400 font-bold whitespace-nowrap">
                     SkyConnect Explorer
                 </h1>
 
-                <form onSubmit={handleSearchSubmit} className="flex-grow max-w-3xl">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Buscar aeropuertos..."
-                            value={searchTerm}
-                            onChange={handleSearch}
-                            className="w-full px-6 py-3 rounded-full bg-white text-black focus:outline-none pr-16"
-                        />
-                        <button
-                            type="submit"
-                            className="absolute right-0 top-0 h-full px-6 rounded-r-full bg-blue-600 flex items-center justify-center"
-                        >
-                            <SearchIcon />
-                            <span className="ml-1 hidden sm:inline">Buscar</span>
-                        </button>
-                    </div>
-                </form>
+                <SearchForm
+                    searchTerm={searchTerm}
+                    placeholder={isIataSearch ? "Buscar por código IATA (ej: LAX)" : "Buscar aeropuertos..."}
+                    onSearchChange={handleSearch}
+                    onSearchSubmit={handleSearchSubmit}
+                />
             </div>
 
+            {/* Search type indicator */}
+            {searchApplied && (
+                <div className="px-4 md:px-8 lg:px-12 mb-4 relative z-10">
+                    <div className="inline-flex items-center bg-blue-600/20 px-4 py-2 rounded-full">
+                        <span className="mr-2">
+                            {isIataSearch ? <AirplanemodeActiveIcon fontSize="small" /> : <SearchIcon fontSize="small" />}
+                        </span>
+                        <span>
+                            {isIataSearch
+                                ? `Buscando por código IATA: ${searchApplied.toUpperCase()}`
+                                : `Resultados para: "${searchApplied}"`}
+                        </span>
+                    </div>
+                </div>
+            )}
+
             {/* Main content - flex-grow pushes pagination to bottom */}
-            <div className="flex-grow">
+            <div className="flex-grow relative z-10">
                 {/* Loading indicator */}
                 {loading && (
                     <div className="flex justify-center my-8">
@@ -233,9 +311,9 @@ const SkyConnectExplorer = () => {
                     </div>
                 )}
 
-                {/* Airport grid - responsive columns */}
+                {/* Airport grid - 2 columns exactly */}
                 {!loading && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-4 md:px-8 lg:px-12">
                         {currentAirports.map(airport => (
                             <AirportCard key={airport.id} airport={airport} />
                         ))}
@@ -253,12 +331,21 @@ const SkyConnectExplorer = () => {
             {/* Pagination */}
             {!loading && <Pagination />}
 
-            {/* Airport Details Modal */}
-            <AirportDetailsModal
-                open={modalOpen}
-                onClose={handleCloseModal}
-                airport={selectedAirport}
-            />
+            {/* Error Snackbar */}
+            <Snackbar
+                open={errorSnackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity="error"
+                    sx={{ width: '100%' }}
+                >
+                    {errorSnackbar.message}
+                </Alert>
+            </Snackbar>
         </div>
     );
 };
