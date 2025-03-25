@@ -2,17 +2,17 @@ import React, { useState, FormEvent } from 'react';
 import { Box, Typography, Container } from '@mui/material';
 import { FlightTakeoff } from '@mui/icons-material';
 import SearchForm from '../ui/SearchForm';
+import { useRouter } from 'next/navigation';
 
 interface SearchSkyConnectProps {
-    onSearch?: (searchTerm: string) => void;
     backgroundImage?: string;
 }
 
 const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
-    onSearch = () => { },
     backgroundImage = '/aeropuerto.png'
 }) => {
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const router = useRouter();
 
     // Función para sanitizar texto sin dependencias externas
     const sanitizeInput = (input: string): string => {
@@ -36,6 +36,12 @@ const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
         return '/aeropuerto.png'; // URL por defecto segura
     };
 
+    // Validar si es un código IATA (3 caracteres alfabéticos)
+    const validateIataCode = (code: string): boolean => {
+        const iataRegex = /^[A-Za-z]{3}$/;
+        return iataRegex.test(code);
+    };
+
     // Manejar cambios en el campo de búsqueda
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(event.target.value);
@@ -45,11 +51,16 @@ const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
     const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        // Aplicar la sanitización completa al texto de búsqueda
+        // Sanitizar la entrada
         const sanitizedInput = sanitizeInput(searchTerm.trim());
+        
+        if (!sanitizedInput) return;
 
-        // Llamar a la función de búsqueda proporcionada por el padre
-        onSearch(sanitizedInput);
+        // Determinar si es una búsqueda por código IATA
+        const isIataSearch = sanitizedInput.length === 3 && validateIataCode(sanitizedInput);
+        
+        // Redirigir a la página SkyConnectExplorer con los parámetros de búsqueda
+        router.push(`/skyconnect-explorer?search=${encodeURIComponent(sanitizedInput)}&isIata=${isIataSearch}`);
     };
 
     const safeBackgroundImage = validateImageUrl(backgroundImage);
@@ -100,7 +111,7 @@ const SearchSkyConnect: React.FC<SearchSkyConnectProps> = ({
                 <Box sx={{ width: '100%', maxWidth: '600px' }}>
                     <SearchForm
                         searchTerm={searchTerm}
-                        placeholder="Buscar aeropuertos..."
+                        placeholder={validateIataCode(searchTerm) ? "Buscar por código IATA (ej: LAX)" : "Buscar aeropuertos..."}
                         onSearchChange={handleSearchChange}
                         onSearchSubmit={handleSearchSubmit}
                     />

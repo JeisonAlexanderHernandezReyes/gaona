@@ -8,20 +8,25 @@ import AirplanemodeActiveIcon from '@mui/icons-material/AirplanemodeActive';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Airport } from '@/types';
 import { useAirportStore } from '@/store/useFlightStore';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import SearchForm from '../ui/SearchForm';
 
 const SkyConnectExplorer = () => {
-    // Navigation
+    // Navigation and URL parameters
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Get search params from URL
+    const urlSearchTerm = searchParams?.get('search') || '';
+    const urlIsIata = searchParams?.get('isIata') === 'true';
 
     // Local state
-    const [searchTerm, setSearchTerm] = useState('');
-    const [searchApplied, setSearchApplied] = useState('');
+    const [searchTerm, setSearchTerm] = useState(urlSearchTerm);
+    const [searchApplied, setSearchApplied] = useState(urlSearchTerm);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isIataSearch, setIsIataSearch] = useState(false);
+    const [isIataSearch, setIsIataSearch] = useState(urlIsIata);
     const [errorSnackbar, setErrorSnackbar] = useState({
         open: false,
         message: ''
@@ -36,15 +41,37 @@ const SkyConnectExplorer = () => {
         fetchAirportByIATA
     } = useAirportStore();
 
+    // Sanitize input for security
+    const sanitizeInput = (input: string): string => {
+        // Remove HTML and special characters to prevent XSS
+        const noHtml = input.replace(/<\/?[^>]+(>|$)/g, "");
+        // Remove potentially dangerous characters to prevent injections
+        const noInjection = noHtml.replace(/['";{}()*&^%$#@!~`\\/]/g, '');
+        // Limit length to prevent DoS attacks
+        return noInjection.substring(0, 100);
+    };
+
     // Map API airports to our Airport interface
     const mapAirportsData = useCallback((apiAirports: Airport[]): Airport[] => {
         return apiAirports;
     }, []);
 
-    // Fetch airports on component mount
+    // Effect to process URL parameters on component mount
     useEffect(() => {
+        if (urlSearchTerm) {
+            // If IATA search is specified in URL params
+            if (urlIsIata) {
+                fetchAirportByIATA(urlSearchTerm.toUpperCase()).catch(err => {
+                    setErrorSnackbar({
+                        open: true,
+                        message: `No airport found with IATA code: ${urlSearchTerm.toUpperCase()} - ${err}`
+                    });
+                });
+            }
+        }
+        
         fetchAirports();
-    }, [fetchAirports]);
+    }, [fetchAirports, fetchAirportByIATA, urlSearchTerm, urlIsIata]);
 
     // Get airports data, either from API or fallback
     const getAirportsData = useCallback((): Airport[] => {
@@ -95,31 +122,43 @@ const SkyConnectExplorer = () => {
         // Clear previous error state
         setErrorSnackbar({ open: false, message: '' });
 
-        if (!searchTerm.trim()) {
+        // Sanitize the input
+        const sanitizedTerm = sanitizeInput(searchTerm.trim());
+        
+        if (!sanitizedTerm) {
             setSearchApplied('');
             setIsIataSearch(false);
             setCurrentPage(1);
+            
+            // Update URL to remove search parameters
+            router.push('/skyconnect-explorer');
             return;
         }
 
         // Check if this is an IATA code search
-        if (searchTerm.length === 3 && validateIataCode(searchTerm)) {
+        if (sanitizedTerm.length === 3 && validateIataCode(sanitizedTerm)) {
             try {
                 setIsIataSearch(true);
-                await fetchAirportByIATA(searchTerm.toUpperCase());
-                setSearchApplied(searchTerm);
+                await fetchAirportByIATA(sanitizedTerm.toUpperCase());
+                setSearchApplied(sanitizedTerm);
                 setCurrentPage(1);
+                
+                // Update URL with search parameters
+                router.push(`/skyconnect-explorer?search=${encodeURIComponent(sanitizedTerm)}&isIata=true`);
             } catch (err) {
                 setErrorSnackbar({
                     open: true,
-                    message: `No airport found with IATA code: ${searchTerm.toUpperCase()} - ${err}`
+                    message: `No airport found with IATA code: ${sanitizedTerm.toUpperCase()} - ${err}`
                 });
             }
         } else {
             // Regular search
             setIsIataSearch(false);
-            setSearchApplied(searchTerm);
+            setSearchApplied(sanitizedTerm);
             setCurrentPage(1);
+            
+            // Update URL with search parameters
+            router.push(`/skyconnect-explorer?search=${encodeURIComponent(sanitizedTerm)}&isIata=false`);
         }
     };
 
