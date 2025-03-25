@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import General from './General';
 import Ubication from './Ubication';
@@ -14,6 +14,7 @@ type Tab = 'general' | 'ubicacion' | 'zona-horaria' | 'estadisticas';
 function AirportInformation() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const code = useMemo(() => searchParams.get('code'), [searchParams]);
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [airport, setAirport] = useState<Airport | null>(null);
@@ -21,31 +22,31 @@ function AirportInformation() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get the airport code from URL query params
-    const code = searchParams.get('code');
-    
-    try {
-      // Try to get the selected airport from localStorage
-      const savedAirport = localStorage.getItem('selectedAirport');
-      
-      if (savedAirport) {
+    const loadAirport = () => {
+      try {
+        const savedAirport = localStorage.getItem('selectedAirport');
+        if (!savedAirport) {
+          setError('Airport information not found. Please go back and try again.');
+          return;
+        }
+
         const parsedAirport = JSON.parse(savedAirport);
-        setAirport(parsedAirport);
-        
-        // Verify the code matches
         if (code && parsedAirport.iata_code !== code) {
           setError('Airport code mismatch. Please go back and try again.');
+          return;
         }
-      } else {
-        setError('Airport information not found. Please go back and try again.');
+
+        setAirport(parsedAirport);
+      } catch (err) {
+        setError('Error loading airport data. Please go back and try again.');
+        console.error('Error parsing airport data:', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError('Error loading airport data. Please go back and try again.');
-      console.error('Error parsing airport data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchParams]);
+    };
+
+    loadAirport();
+  }, [code]);
 
   const tabs = [
     { id: 'general', label: 'General' },
@@ -57,7 +58,7 @@ function AirportInformation() {
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center h-64" role="status">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       );
@@ -74,13 +75,13 @@ function AirportInformation() {
 
     switch (activeTab) {
       case 'general':
-        return <General airport={airport} />;
+        return <div data-testid="general-tab"><General airport={airport} /></div>;
 
       case 'ubicacion':
-        return <Ubication airport={airport} />;
+        return <div data-testid="ubicacion-tab"><Ubication airport={airport} /></div>;
 
       case 'zona-horaria':
-        return <ZoneTime airport={airport} />;
+        return <div data-testid="zona-horaria-tab"><ZoneTime airport={airport} /></div>;
 
       default:
         return (
@@ -92,16 +93,13 @@ function AirportInformation() {
     }
   };
 
-  const handleBack = () => {
-    router.back();
-  };
-
   return (
     <div className="min-h-screen bg-[#0A0F2C] text-white p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
         <button 
-          onClick={handleBack}
+          onClick={() => router.back()}
           className="flex items-center text-[#4B8BFF] mb-4 hover:underline"
+          aria-label="volver"
         >
           <ArrowBackIcon className="mr-1" /> Volver
         </button>
@@ -116,10 +114,11 @@ function AirportInformation() {
 
         <div className="max-w-7xl mx-auto bg-[#2A2F45]/50 rounded-xl p-1 mb-8 sm:mb-12">
           {/* Mobile Menu Button */}
-          <div className="sm:hidden">
+          <div className="sm:hidden" data-testid="mobile-menu">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="w-full flex items-center justify-between px-4 py-2 text-gray-400 hover:text-white"
+              aria-label="menu"
             >
               <span>{tabs.find(tab => tab.id === activeTab)?.label}</span>
               <svg
@@ -139,7 +138,7 @@ function AirportInformation() {
             
             {/* Mobile Menu Dropdown */}
             {isMobileMenuOpen && (
-              <div className="mt-2 space-y-1 px-2">
+              <div className="mt-2 space-y-1 px-2" role="list">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
