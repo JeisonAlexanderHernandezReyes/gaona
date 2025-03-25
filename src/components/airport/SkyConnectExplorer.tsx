@@ -53,8 +53,8 @@ const SkyConnectExplorer = () => {
             airport.iata_code.toLowerCase().includes(searchTermLower);
     });    
 
-    // Pagination logic
-    const itemsPerPage = 8;
+    // Pagination logic - ajustado a 6 items por página (2 columnas x 3 filas)
+    const itemsPerPage = 6;
     const totalPages = Math.ceil(filteredAirports.length / itemsPerPage);
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -82,28 +82,28 @@ const SkyConnectExplorer = () => {
         router.push(`/airportInformation?code=${airport.iata_code}`);
     };
 
-    // Airport card component with updated info
+    // Airport card component with updated info - más grande y con mejor padding
     const AirportCard = ({ airport }: { airport: Airport }) => (
         <div
-            className="bg-gray-800 rounded-lg p-4 relative overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:bg-gray-700"
+            className="bg-gray-800 rounded-lg p-6 relative overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer hover:bg-gray-700 w-full h-full flex flex-col"
             onClick={() => handleAirportClick(airport)}
         >
-            <div className="flex justify-between">
-                <div className="overflow-hidden">
-                    <h3 className="text-xl font-bold truncate text-white">{airport.airport_name}</h3>
-                    <p className="text-gray-400 truncate"> {airport.country_name}</p>
-                    <div className="mt-4">
-                        <span className="text-4xl font-bold text-blue-400">{airport.iata_code}</span>
+            <div className="flex justify-between items-start">
+                <div className="overflow-hidden flex-1">
+                    <h3 className="text-xl font-bold text-white mb-2">{airport.airport_name}</h3>
+                    <p className="text-gray-400"> {airport.country_name}</p>
+                    <div className="mt-6">
+                        <span className="text-5xl font-bold text-blue-400">{airport.iata_code}</span>
                     </div>
                 </div>
-                <div className="flex items-center ml-2">
-                    <div className="bg-blue-500 p-3 rounded-full text-white flex-shrink-0">
-                        <FlightTakeoffIcon />
+                <div className="flex items-center">
+                    <div className="bg-blue-500 p-4 rounded-full text-white flex-shrink-0">
+                        <FlightTakeoffIcon fontSize="medium" />
                     </div>
                 </div>
             </div>
-            <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
-                <div className="text-8xl text-gray-500">✈</div>
+            <div className="absolute right-2 bottom-2 opacity-10 pointer-events-none">
+                <div className="text-9xl text-gray-500">✈</div>
             </div>
         </div>
     );
@@ -192,7 +192,7 @@ const SkyConnectExplorer = () => {
     return (
         <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col">
             {/* Header with search in a single row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4 px-4 md:px-8 lg:px-12">
                 <h1 className="text-3xl text-blue-400 font-bold whitespace-nowrap">
                     SkyConnect Explorer
                 </h1>
@@ -233,9 +233,9 @@ const SkyConnectExplorer = () => {
                     </div>
                 )}
 
-                {/* Airport grid - responsive columns */}
+                {/* Airport grid - 2 columnas exactamente */}
                 {!loading && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-4 md:px-8 lg:px-12">
                         {currentAirports.map(airport => (
                             <AirportCard key={airport.id} airport={airport} />
                         ))}
