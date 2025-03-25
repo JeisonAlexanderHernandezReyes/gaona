@@ -62,15 +62,6 @@ function Page() {
           </div>
         </div>
       </div>
-
-      {/* Background Decoration */}
-      <div className="fixed bottom-0 right-0 w-1/3 h-1/3 opacity-10">
-        <img
-          src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800"
-          alt="Airplane decoration"
-          className="w-full h-full object-contain"
-        />
-      </div>
     </div>
   );
 }

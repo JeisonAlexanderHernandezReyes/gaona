@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-interface Flight {
+export interface Flight {
   flight_date: string;
   flight_status: string;
   departure: {
@@ -20,7 +20,7 @@ interface Flight {
   };
 }
 
-interface Airport {
+export interface ApiAirport {
   airport_name: string;
   iata_code: string;
   city: string;
@@ -35,7 +35,7 @@ interface FlightStore {
 }
 
 interface AirportStore {
-  airports: Airport[];
+  airports: ApiAirport[];
   loading: boolean;
   error: string | null;
   fetchAirports: () => Promise<void>;
@@ -73,17 +73,27 @@ export const useAirportStore = create<AirportStore>((set) => ({
   fetchAirports: async () => {
     try {
       set({ loading: true, error: null });
-      const response = await axios.get(`${API_URL}/airports`, {
-        params: {
-          access_key: API_KEY,
-        },
-      });
-      set({ airports: response.data.data, loading: false });
+      
+      // Set pagination parameters
+      const params = {
+        access_key: API_KEY,
+        limit: 100 // Fetch more airports at once for better user experience
+      };
+      
+      const response = await axios.get(`${API_URL}/airports`, { params });
+      
+      // Validate response structure
+      if (response.data && Array.isArray(response.data.data)) {
+        set({ airports: response.data.data, loading: false });
+      } else {
+        throw new Error('Invalid API response format');
+      }
     } catch (error) {
+      console.error('Error fetching airports:', error);
       set({ 
         error: error instanceof Error ? error.message : 'An error occurred while fetching airports',
         loading: false 
       });
     }
   },
-})); 
+}));
